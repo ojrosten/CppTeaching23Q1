@@ -129,9 +129,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="CppTeaching23Q1.cpp" />
+    <ClCompile Include="Probability.cpp" />
     <ClCompile Include="Tennis.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Probability.hpp" />
     <ClInclude Include="Tennis.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

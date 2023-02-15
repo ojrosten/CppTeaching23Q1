@@ -21,9 +21,15 @@
     <ClCompile Include="Tennis.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Probability.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Tennis.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Probability.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
