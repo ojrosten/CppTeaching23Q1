@@ -32,19 +32,33 @@ gl_state operator|(gl_state lhs, gl_state rhs)
 // 011
 // 100
 
+float foo(float x)
+{
+  return x;
+}
+
+namespace N
+{
+  int foo(int x)
+  {
+    return 2*x;
+  }
+}
+
 int main()
 {
-    using namespace maths;
 
     try
     {
-        probability<double> p{ 0.5 }, q{ 0.2 }, r{ q }, s{p + q};
+        using namespace maths;
+        constexpr probability<double> p{ 0.5 }, q{ 0.2 }, r{ q }, s{p + q};
 
-        p /= q;
+        constexpr probability<float> t{0.4f};
 
-        probability<float> t{0.4f};
 
-        std::cout << p.raw_value() << t.raw_value();
+        constexpr probability<double> u{bayes(p, q, r)};
+
+        using std::cout;
     }
     catch (const std::logic_error& e)
     {
