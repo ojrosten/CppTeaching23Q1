@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <limits>
+#include <utility>
 
 namespace rugby
 {
@@ -32,33 +33,63 @@ gl_state operator|(gl_state lhs, gl_state rhs)
 // 011
 // 100
 
-float foo(float x)
+// RAII
+// Resource Acquisition Is Initialization
+class wrapper
 {
-  return x;
+public:
+  wrapper(int x)
+    : m_P{new int{x}}
+  {
+    std::cout << "Constructor\n";
+  }
+
+  wrapper(wrapper const&) = delete;
+
+  /*wrapper(wrapper const& other)
+    : m_P{new int{*(other.m_P)}}
+  {
+    std::cout << "Copy Constructor\n";
+  }*/
+
+  wrapper(wrapper&& other) noexcept
+    : m_P{std::exchange(other.m_P, nullptr)}
+  {
+    std::cout << "Move Constructor\n";
+  }
+
+  ~wrapper()
+  {
+    std::cout << "Destructor\n";
+    delete m_P;
+  }
+
+private:
+  int* m_P{};
+};
+
+wrapper bar(int x) {
+  wrapper w{x};
+  std::cout << "inside bar\n";
+
+  return w;
 }
 
-namespace N
+class foo
 {
-  int foo(int x)
-  {
-    return 2*x;
-  }
-}
+public:
+  foo(int x) : m_W{x}
+  {}
+private:
+  wrapper m_W;
+};
 
 int main()
 {
 
     try
     {
-        using namespace maths;
-        constexpr probability<double> p{ 0.5 }, q{ 0.2 }, r{ q }, s{p + q};
-
-        constexpr probability<float> t{0.4f};
-
-
-        constexpr probability<double> u{bayes(p, q, r)};
-
-        using std::cout;
+      wrapper y{bar(7)};
     }
     catch (const std::logic_error& e)
     {
