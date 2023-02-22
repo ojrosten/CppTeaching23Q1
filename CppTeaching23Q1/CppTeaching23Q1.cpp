@@ -38,6 +38,8 @@ gl_state operator|(gl_state lhs, gl_state rhs)
 class wrapper
 {
 public:
+  wrapper() = default;
+
   wrapper(int x)
     : m_P{new int{x}}
   {
@@ -58,10 +60,29 @@ public:
     std::cout << "Move Constructor\n";
   }
 
+  wrapper& operator=(wrapper const&) = delete;
+
+  wrapper& operator=(wrapper&& other) noexcept
+  {
+    if(&other != this)
+    {
+      m_P = std::exchange(other.m_P, nullptr);
+    }
+    return *this;
+  }
+
   ~wrapper()
   {
     std::cout << "Destructor\n";
     delete m_P;
+  }
+
+  [[nodiscard]]
+  int value() const {
+    if(m_P == nullptr)
+      throw std::runtime_error{"null pointer!"};
+
+    return *m_P;
   }
 
 private:
@@ -70,8 +91,6 @@ private:
 
 wrapper bar(int x) {
   wrapper w{x};
-  std::cout << "inside bar\n";
-
   return w;
 }
 
@@ -80,20 +99,29 @@ class foo
 public:
   foo(int x) : m_W{x}
   {}
+
+  foo(foo const&) = default;
+
+  foo(foo&&) = default;
 private:
   wrapper m_W;
 };
+
 
 int main()
 {
 
     try
     {
-      wrapper y{bar(7)};
+      foo f{42}, g{f};
     }
     catch (const std::logic_error& e)
     {
         std::cout << e.what();
+    }
+    catch(const std::runtime_error& e)
+    {
+      std::cout << e.what();
     }
     catch (...)
     {
