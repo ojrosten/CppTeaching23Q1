@@ -7,6 +7,7 @@
 #include <utility>
 #include <array>
 #include <ranges>
+#include <algorithm>
 
 namespace rugby
 {
@@ -117,49 +118,39 @@ constexpr bool has_empty_fn = requires(const T& t){
   t.empty();
 };
 
+auto pred(int e) -> bool { return e > 60; }
+
+struct moon_pred
+{
+private:
+  int maxMoons{};
+public:
+
+  moon_pred(int m) : maxMoons{m} {};
+
+  bool operator() (int e) const { return e > maxMoons; }
+};
 
 int main()
 {
-
     try
     {
+      std::vector<int> moons{0, 0, 1, 2, 92, 79, 27, 14};
 
+      // 0 0 1 2 79 27 14 ???    
+      //                  ^last ^end
 
-      int x[8]{0,0,1,2,60,62, 27, 14};
+      int maxMoons{60};
 
-      /*for(int i{}; i < 8; ++i)
-      {
-        std::cout << x[i] << '\n';
-      }*/
+      auto last{std::ranges::remove_if(moons, [maxMoons](int e) { return e > maxMoons; })};
 
-      //int* begin{x};// , * end{begin + 8};
-      //for(; begin != begin + 8; ++begin)
-      //{
-      //  std::cout << *begin << '\n';
-      //}
+      auto last2{std::ranges::remove_if(moons, moon_pred{maxMoons})};
 
-      std::vector<int> y{0,0,1,2,60,62, 27, 14};
+      //moons.erase(last, moons.end());
+      moons.erase(last.begin(), last.end());
 
-      /*for(int i{}; i < y.size(); ++i)
-      {
-        std::cout << y[i] << '\n';
-      }*/
-
-
-      //using it = std::array<int, 9>::const_iterator;
-      for(auto i{y.begin()}; i != y.end(); ++i)
-      {
-        std::cout << *i << '\n';
-      }
-
-
-      for(auto e : y)
-      {
-        std::cout << e << '\n';
-      }
-
-      std::cout << "The size of my container is: " << y.size() << '\n';
-;    }
+      for(auto e : moons) std::cout << e << '\n';
+;   }
     catch (const std::logic_error& e)
     {
         std::cout << e.what();
