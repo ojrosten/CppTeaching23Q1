@@ -5,6 +5,8 @@
 #include <vector>
 #include <limits>
 #include <utility>
+#include <array>
+#include <ranges>
 
 namespace rugby
 {
@@ -97,14 +99,22 @@ wrapper bar(int x) {
 class foo
 {
 public:
-  foo(int x) : m_W{x}
+  foo(int x, int y)
   {}
-
-  foo(foo const&) = default;
-
-  foo(foo&&) = default;
 private:
-  wrapper m_W;
+};
+
+template<class T>
+void swap(T& lhs, T& rhs)
+{
+  auto temp{std::move(lhs)}; // Construction
+  lhs = std::move(rhs);      // assignment
+  rhs = std::move(temp);     // assignment
+}
+
+template<class T>
+constexpr bool has_empty_fn = requires(const T& t){
+  t.empty();
 };
 
 
@@ -113,8 +123,43 @@ int main()
 
     try
     {
-      foo f{42}, g{f};
-    }
+
+
+      int x[8]{0,0,1,2,60,62, 27, 14};
+
+      /*for(int i{}; i < 8; ++i)
+      {
+        std::cout << x[i] << '\n';
+      }*/
+
+      //int* begin{x};// , * end{begin + 8};
+      //for(; begin != begin + 8; ++begin)
+      //{
+      //  std::cout << *begin << '\n';
+      //}
+
+      std::vector<int> y{0,0,1,2,60,62, 27, 14};
+
+      /*for(int i{}; i < y.size(); ++i)
+      {
+        std::cout << y[i] << '\n';
+      }*/
+
+
+      //using it = std::array<int, 9>::const_iterator;
+      for(auto i{y.begin()}; i != y.end(); ++i)
+      {
+        std::cout << *i << '\n';
+      }
+
+
+      for(auto e : y)
+      {
+        std::cout << e << '\n';
+      }
+
+      std::cout << "The size of my container is: " << y.size() << '\n';
+;    }
     catch (const std::logic_error& e)
     {
         std::cout << e.what();
