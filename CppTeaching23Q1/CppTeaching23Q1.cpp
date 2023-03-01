@@ -1,5 +1,6 @@
 #include "Tennis.hpp"
 #include "Probability.hpp"
+#include "Set.hpp"
 
 #include <iostream>
 #include <vector>
@@ -8,6 +9,7 @@
 #include <array>
 #include <ranges>
 #include <algorithm>
+#include <set>
 
 namespace rugby
 {
@@ -97,13 +99,6 @@ wrapper bar(int x) {
   return w;
 }
 
-class foo
-{
-public:
-  foo(int x, int y)
-  {}
-private:
-};
 
 template<class T>
 void swap(T& lhs, T& rhs)
@@ -135,22 +130,26 @@ int main()
 {
     try
     {
-      std::vector<int> moons{0, 0, 1, 2, 92, 79, 27, 14};
+      using namespace containers;
 
-      // 0 0 1 2 79 27 14 ???    
-      //                  ^last ^end
+      // -1, 3, 4, 42
+      set<int> s{42, -1, 4, 3};
 
-      int maxMoons{60};
+      for(auto e : s) std::cout << e << '\n';
 
-      auto last{std::ranges::remove_if(moons, [maxMoons](int e) { return e > maxMoons; })};
+      std::cout << '\n';
 
-      auto last2{std::ranges::remove_if(moons, moon_pred{maxMoons})};
+      // -1, 4, 42
+      s.erase(s.begin()+1);
 
-      //moons.erase(last, moons.end());
-      moons.erase(last.begin(), last.end());
+      for(auto e : s) std::cout << e << '\n';
 
-      for(auto e : moons) std::cout << e << '\n';
-;   }
+      std::cout << '\n';
+
+      // -1, 4, 7, 42
+      s.insert(7);
+      for(auto e : s) std::cout << e << '\n';
+    }
     catch (const std::logic_error& e)
     {
         std::cout << e.what();

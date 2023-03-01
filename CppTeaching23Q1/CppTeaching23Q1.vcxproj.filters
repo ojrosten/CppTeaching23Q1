@@ -32,5 +32,8 @@
     <ClInclude Include="Probability.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Set.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
