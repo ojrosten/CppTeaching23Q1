@@ -21,9 +21,9 @@ namespace containers
       std::ranges::sort(m_Vals);
     }
 
-    auto begin() const { return m_Vals.begin(); }
+    const_iterator begin() const { return m_Vals.begin(); }
 
-    auto end() const { return m_Vals.end(); }
+    const_iterator end() const { return m_Vals.end(); }
 
     void erase(const_iterator it)
     {
