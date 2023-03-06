@@ -10,6 +10,8 @@
 #include <ranges>
 #include <algorithm>
 #include <set>
+#include <map>
+#include <unordered_map>
 
 namespace rugby
 {
@@ -132,23 +134,39 @@ int main()
     {
       using namespace containers;
 
-      // -1, 3, 4, 42
-      set<int> s{42, -1, 4, 3};
+      std::cout << std::boolalpha;
 
-      for(auto e : s) std::cout << e << '\n';
+      std::unordered_map<std::string, int> personData;
+      
 
-      std::cout << '\n';
+      personData.emplace("Oliver", 30);
+      personData.emplace("Tom", 39);
 
-      // -1, 4, 42
-      s.erase(s.begin()+1);
+      auto found{personData.find("Tom")};
+      if(found != personData.end())
+        std::cout << found->first << " age: " << found->second << '\n';
+      else
+        std::cout << "Not found\n";
 
-      for(auto e : s) std::cout << e << '\n';
+      //// -1, 3, 4, 42
+      //set<int> s{42, -1, 4, 3};
 
-      std::cout << '\n';
+      //for(auto e : s) std::cout << e << '\n';
 
-      // -1, 4, 7, 42
-      s.insert(7);
-      for(auto e : s) std::cout << e << '\n';
+      //std::cout << '\n';
+
+      //// -1, 4, 42
+      //s.erase(s.begin()+1);
+
+      //for(auto e : s) std::cout << e << '\n';
+
+      //std::cout << '\n';
+
+      //// -1, 4, 7, 42
+      //auto [iter, isInserted]{s.insert(7)};
+      //std::cout << *iter << " inserted? " << isInserted << '\n';
+
+      //for(auto e : s) std::cout << e << '\n';
     }
     catch (const std::logic_error& e)
     {
