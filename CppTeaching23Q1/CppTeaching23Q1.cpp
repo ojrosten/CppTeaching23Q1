@@ -128,45 +128,77 @@ public:
   bool operator() (int e) const { return e > maxMoons; }
 };
 
+namespace life
+{
+  class animal
+  {
+  public:
+    virtual void walk() = 0;
+
+    virtual void vocalize() = 0;
+  };
+
+  class dog : public animal
+  {
+  public:
+    void walk() override
+    {
+      animal::walk();
+      std::cout << "Dog walking\n";
+    }
+
+    void vocalize() override
+    {
+      std::cout << "Dog noises\n";
+    }
+  };
+
+  class cat : public animal
+  {
+  public:
+    void walk() override
+    {
+      std::cout << "Cat walking\n";
+    }
+
+    void vocalize() override
+    {
+      std::cout << "Cat noises\n";
+    }
+  };
+
+  class whale : public animal
+  {
+  public:
+    /*void walk() override
+    {
+
+    }*/
+
+    void vocalize() override
+    {
+      std::cout << "Whale noises\n";
+    }
+  };
+}
+
 int main()
 {
     try
     {
-      using namespace containers;
+      using namespace life;
 
-      std::cout << std::boolalpha;
+      dog rover{};
 
-      std::unordered_map<std::string, int> personData;
-      
+      cat mog{};
 
-      personData.emplace("Oliver", 30);
-      personData.emplace("Tom", 39);
+      std::vector<animal*> animals{&rover, &mog};
 
-      auto found{personData.find("Tom")};
-      if(found != personData.end())
-        std::cout << found->first << " age: " << found->second << '\n';
-      else
-        std::cout << "Not found\n";
-
-      //// -1, 3, 4, 42
-      //set<int> s{42, -1, 4, 3};
-
-      //for(auto e : s) std::cout << e << '\n';
-
-      //std::cout << '\n';
-
-      //// -1, 4, 42
-      //s.erase(s.begin()+1);
-
-      //for(auto e : s) std::cout << e << '\n';
-
-      //std::cout << '\n';
-
-      //// -1, 4, 7, 42
-      //auto [iter, isInserted]{s.insert(7)};
-      //std::cout << *iter << " inserted? " << isInserted << '\n';
-
-      //for(auto e : s) std::cout << e << '\n';
+      for(auto p : animals)
+      {
+        p->walk();
+        p->vocalize();
+      }
     }
     catch (const std::logic_error& e)
     {
