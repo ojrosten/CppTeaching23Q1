@@ -170,10 +170,10 @@ namespace life
   class whale : public animal
   {
   public:
-    /*void walk() override
+    void walk() override
     {
 
-    }*/
+    }
 
     void vocalize() override
     {
@@ -192,7 +192,9 @@ int main()
 
       cat mog{};
 
-      std::vector<animal*> animals{&rover, &mog};
+      whale jeff{};
+
+      std::vector<animal*> animals{&rover, &mog, &jeff};
 
       for(auto p : animals)
       {
