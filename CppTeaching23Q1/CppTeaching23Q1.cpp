@@ -12,6 +12,7 @@
 #include <set>
 #include <map>
 #include <unordered_map>
+#include <functional>
 
 namespace rugby
 {
@@ -133,17 +134,21 @@ namespace life
   class animal
   {
   public:
-    virtual void walk() = 0;
+    virtual ~animal() = default;
 
     virtual void vocalize() = 0;
+
+    virtual bool is_dog() const { return false; }
+    virtual bool is_cat() const { return false; }
+    virtual bool is_whale() const { return false; }
   };
+
 
   class dog : public animal
   {
   public:
-    void walk() override
+    void walk()
     {
-      animal::walk();
       std::cout << "Dog walking\n";
     }
 
@@ -151,12 +156,14 @@ namespace life
     {
       std::cout << "Dog noises\n";
     }
+
+    bool is_dog() const override { return true; }
   };
 
   class cat : public animal
   {
   public:
-    void walk() override
+    void walk()
     {
       std::cout << "Cat walking\n";
     }
@@ -165,41 +172,66 @@ namespace life
     {
       std::cout << "Cat noises\n";
     }
+
+    bool is_cat() const override { return true; }
   };
 
-  class whale : public animal
+  class whale final : public animal
   {
+    std::vector<int> m_Bones;
   public:
-    void walk() override
-    {
-
-    }
 
     void vocalize() override
     {
       std::cout << "Whale noises\n";
     }
+
+    bool is_whale() const final { return true; }
+  };
+
+  class factory
+  {
+  public:
+    using product = std::unique_ptr<animal>;
+    using map_elements = std::pair<const std::string, std::function<product()>>;
+
+    factory(std::initializer_list<map_elements> init) 
+      : m_Map{init}
+    { }
+
+    product make(const std::string& name) const
+    {
+      auto found{m_Map.find(name)};
+      if(found == m_Map.end()) throw std::runtime_error{"Type not found"};
+
+      return found->second();
+    }
+  private:
+    std::map<std::string, std::function<product()>> m_Map;
   };
 }
+
+
 
 int main()
 {
     try
     {
       using namespace life;
+      factory f{
+        {"whale", []() -> std::unique_ptr<animal> { return std::make_unique<whale>(); }},
+        {"dog", []() -> std::unique_ptr<animal> { return std::make_unique<dog>(); }},
+        {"cat", []() -> std::unique_ptr<animal> { return std::make_unique<cat>(); }},
+      };
 
-      dog rover{};
+      std::vector<std::unique_ptr<animal>> animals{};
 
-      cat mog{};
+      animals.emplace_back(f.make("whale"));
+      animals.emplace_back(f.make("dog"));
 
-      whale jeff{};
-
-      std::vector<animal*> animals{&rover, &mog, &jeff};
-
-      for(auto p : animals)
+      for(auto& a : animals)
       {
-        p->walk();
-        p->vocalize();
+        a->vocalize();
       }
     }
     catch (const std::logic_error& e)
