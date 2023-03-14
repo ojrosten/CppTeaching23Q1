@@ -2,9 +2,24 @@
 
 #include <stdexcept>
 #include <concepts>
+#include <iostream>
 
 namespace maths
 {
+  template<class Stream, class T>
+  constexpr bool is_serializable_to{
+    requires(Stream& s, T& t) {
+      {s << t} -> std::same_as<Stream&>;
+    }
+  };
+
+  template<class Stream, class T>
+  constexpr bool is_deserializable_to{
+    requires(Stream & s, T & t) {
+      {s >> t} -> std::same_as<Stream&>;
+    }
+  };
+
   [[nodiscard]]
   std::string make_out_of_bounds_error();
 
@@ -19,7 +34,7 @@ namespace maths
     constexpr explicit probability(T p) : m_Prob{ p }
     {
       if ((m_Prob < 0) || (m_Prob > 1))
-        throw std::logic_error{ make_out_of_bounds_error()};
+        throw std::out_of_range{ make_out_of_bounds_error()};
     }
 
     constexpr probability(const probability&) = default;
@@ -68,6 +83,23 @@ namespace maths
     [[nodiscard]]
     friend constexpr auto operator<=>(const probability&, const probability&) noexcept = default;
 
+    template<class Stream>
+      requires is_deserializable_to<Stream, T>
+    friend Stream& operator>>(Stream& s, probability& p)
+    {
+      T t{};
+      s >> t;
+      p = probability{t};
+
+      return s;
+    }
+
+    template<class Stream>
+      requires is_serializable_to<Stream, T>
+    friend Stream& operator<<(Stream& s, probability& p)
+    {
+      return s << p.raw_value();
+    }
   private:
     T m_Prob{};
   };

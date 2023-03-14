@@ -13,6 +13,8 @@
 #include <map>
 #include <unordered_map>
 #include <functional>
+#include <format>
+#include <sstream>
 
 namespace rugby
 {
@@ -211,36 +213,26 @@ namespace life
   };
 }
 
-
-
 int main()
 {
     try
     {
-      using namespace life;
-      factory f{
-        {"whale", []() -> std::unique_ptr<animal> { return std::make_unique<whale>(); }},
-        {"dog", []() -> std::unique_ptr<animal> { return std::make_unique<dog>(); }},
-        {"cat", []() -> std::unique_ptr<animal> { return std::make_unique<cat>(); }},
-      };
-
-      std::vector<std::unique_ptr<animal>> animals{};
-
-      animals.emplace_back(f.make("whale"));
-      animals.emplace_back(f.make("dog"));
-
-      for(auto& a : animals)
-      {
-        a->vocalize();
-      }
+    }
+    catch(const std::out_of_range& e)
+    {
+      std::cout << "Out of range Error: " << e.what();
     }
     catch (const std::logic_error& e)
     {
-        std::cout << e.what();
+        std::cout << "Logic Error: " << e.what();
     }
     catch(const std::runtime_error& e)
     {
       std::cout << e.what();
+    }
+    catch(const std::exception& e)
+    {
+      std::cout << "Exception Error: " << e.what();
     }
     catch (...)
     {
