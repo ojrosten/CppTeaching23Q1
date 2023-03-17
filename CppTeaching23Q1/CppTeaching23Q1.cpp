@@ -213,10 +213,70 @@ namespace life
   };
 }
 
+template<class R, class... Args>
+class function
+{
+public:
+  template<class T>
+  function(T t)
+    : m_pInvocable{std::make_unique<essence<T>>(t)}
+  {
+  }
+
+  R operator()(Args... args) const
+  {
+    return (*m_pInvocable)(args...);
+  }
+
+  // Feed it functions, or function objects (lambdas)
+private:
+  struct soul
+  {
+    virtual ~soul() = default;
+
+    virtual R operator()(Args...) const = 0;
+  };
+
+  template<class T>
+  struct essence final : soul
+  {
+    essence(T t) : m_Val{t} {}
+
+    R operator()(Args... args) const final
+    {
+      return m_Val(args...);
+    }
+
+    T m_Val;
+  };
+
+
+  std::unique_ptr<soul> m_pInvocable;
+};
+
 int main()
 {
     try
     {
+      function<void> f{[]() { std::cout << "Hello, function!\n"; }};
+
+      std::string message{"Hello, again\n"};
+      function<std::string> g{[message]() { return message; }};
+
+      function<void, int> h{[](int x) { std::cout << "Hello " << x << '\n'; }};
+
+      function<std::string, int, double> i{[](int x, double y) { return std::format("Hello {}, {}", x, y); }};
+      
+      //function g{[](int x) { std::cout << "Hello" << x << '\n'; }};
+
+      //function h{[](int x) { return std::to_string(x); }};
+
+      f();
+      std::cout << g();
+      h(42);
+      std::cout << i(42, 3.14);
+      //g(42);
+      //std::cout << h(33);
     }
     catch(const std::out_of_range& e)
     {
