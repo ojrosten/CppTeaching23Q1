@@ -213,6 +213,98 @@ namespace life
   };
 }
 
+namespace life2
+{
+  class whale
+  {
+  public:
+    void vocalize() const
+    {
+      std::cout << "Whale noises\n";
+    }
+  };
+
+  class dog
+  {
+  public:
+    void walk() const
+    {
+      std::cout << "Dog walking\n";
+    }
+
+    void vocalize() const
+    {
+      std::cout << "Dog noises\n";
+    }
+  };
+
+  template<class T>
+  constexpr bool can_vocalize{
+    requires(const T& t) { t.vocalize(); }
+  };
+
+  template<class T>
+  concept is_animal = can_vocalize<T>;
+
+  class animal
+  {
+  public:
+    template<is_animal T>
+    animal(T t)
+      : m_pActualAnimal{std::make_unique<essence<T>>(t)}
+    {}
+
+    animal(const animal& other)
+      : m_pActualAnimal{ other.m_pActualAnimal->clone() }
+    {}
+
+    animal(animal&&) noexcept = default;
+
+    void vocalize() const
+    {
+      if (!m_pActualAnimal)
+        throw std::runtime_error{"Null pointer! using moved-from object"};
+
+      m_pActualAnimal->vocalize();
+    }
+
+    template<class T>
+    const T* animal_cast()
+    {
+      return dynamic_cast<const T*>(m_pActualAnimal.get());
+    }
+  private:
+    struct soul
+    {
+      virtual ~soul() = default;
+
+      virtual std::unique_ptr<soul> clone() = 0;
+
+      virtual void vocalize() const = 0;
+    };
+
+    template<class T>
+    struct essence final : soul
+    {
+      essence(T t) : m_ActualAnimal{ t } {}
+
+      void vocalize() const final
+      {
+        m_ActualAnimal.vocalize();
+      }
+
+      std::unique_ptr<soul> clone()
+      {
+        return std::make_unique<essence<T>>(m_ActualAnimal);
+      }
+
+      T m_ActualAnimal;
+    };
+
+    std::unique_ptr<soul> m_pActualAnimal{};
+  };
+}
+
 template<class R, class... Args>
 class function
 {
@@ -258,25 +350,14 @@ int main()
 {
     try
     {
-      function<void> f{[]() { std::cout << "Hello, function!\n"; }};
+      using namespace life2;
 
-      std::string message{"Hello, again\n"};
-      function<std::string> g{[message]() { return message; }};
+      std::vector<animal> v{ whale{}, dog{}, whale{}, whale{} };
 
-      function<void, int> h{[](int x) { std::cout << "Hello " << x << '\n'; }};
-
-      function<std::string, int, double> i{[](int x, double y) { return std::format("Hello {}, {}", x, y); }};
-      
-      //function g{[](int x) { std::cout << "Hello" << x << '\n'; }};
-
-      //function h{[](int x) { return std::to_string(x); }};
-
-      f();
-      std::cout << g();
-      h(42);
-      std::cout << i(42, 3.14);
-      //g(42);
-      //std::cout << h(33);
+      for (auto& a : v)
+      {
+        a.vocalize();
+      }
     }
     catch(const std::out_of_range& e)
     {
