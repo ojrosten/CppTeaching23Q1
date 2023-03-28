@@ -16,7 +16,9 @@
 #include <format>
 #include <sstream>
 #include <variant>
-
+#include <optional>
+#include <filesystem>
+#include <any>
 
 namespace life
 {
@@ -254,31 +256,76 @@ struct overloaded : Ts...
   using Ts::operator()...;
 };
 
+namespace tennis2
+{
+
+  class game 
+  {
+  };
+
+  class tiebreak
+  {
+  };
+
+  class set
+  {
+    std::vector<game> games;
+    std::optional<tiebreak> tb;
+  };
+}
+
+void file_access(const std::optional<std::filesystem::path>& p)
+{
+  if (p.has_value())
+  {
+    if (std::filesystem::exists(p.value()))
+    {
+      std::cout << "hello, file!\n";
+    }
+    else
+    {
+      throw std::runtime_error{ "File not found" };
+    }
+  }
+
+  std::cout << "No file supplied\n";
+}
+
 int main()
 {
     try
     {
-      std::cout << sizeof(double) << '\n' << sizeof(std::variant<double, float, int>) << '\n';
+      std::filesystem::path p{"C:/UnitySrc"};
 
-
-      using namespace life2;
-
-      std::vector<std::variant<whale, dog>> animals{ { whale{} },    { dog{} }     };
-      //                                             ^^ variant^^   ^^variant^^  
-      //                                           ^^
-      //                                          initializing the vector
-
-      for (const auto& a : animals)
+      if (p.empty())
       {
-        std::visit(
-          overloaded{
-            [](const whale& w){ w.vocalize(); },
-            [](const dog& d){ d.walk(); }
-          },
-          a);
-        //std::visit(animal_actions{}, a);
-        //         ^^^ the vistor - defines the action performed for each type 
+        std::cout << "Empty file path\n";
       }
+      else
+      {
+        std::cout << p.generic_string() << '\n';
+      }
+
+      const int x{ p.empty() ? 42 : 0};
+
+      const int x{
+        [&p](){
+          if (p.empty()) return 42;
+
+          return 0;
+        }()
+      };
+
+      std::cout << (p.empty() ? "Empty file path" : p.generic_string()) << '\n';
+
+
+      //file_access(p);
+      //file_access("");
+      //file_access(std::nullopt);
+
+      std::any x{ 42 };
+      std::any y{ std::string{""} };
+
     }
     catch(const std::out_of_range& e)
     {
