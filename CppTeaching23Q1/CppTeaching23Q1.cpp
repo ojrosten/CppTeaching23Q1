@@ -295,36 +295,21 @@ int main()
 {
     try
     {
-      std::filesystem::path p{"C:/UnitySrc"};
+      using namespace maths;
 
-      if (p.empty())
-      {
-        std::cout << "Empty file path\n";
-      }
-      else
-      {
-        std::cout << p.generic_string() << '\n';
-      }
+      std::cout << sizeof(probability<float, clamp_on_range_error<float>>) << '\n';
+      std::cout << sizeof(clamp_on_range_error<float>) << "\n\n";
+      std::cout << sizeof(probability<float, throw_on_range_error>) << '\n';
+      std::cout << sizeof(throw_on_range_error) << "\n\n";
 
-      const int x{ p.empty() ? 42 : 0};
+      probability<float, clamp_on_range_error<float>> p{ 1.4f };
 
-      const int x{
-        [&p](){
-          if (p.empty()) return 42;
+      std::cout << p << '\n' << p.get_error() << '\n';
 
-          return 0;
-        }()
-      };
+      probability<float, throw_on_range_error> q{ 0.4f };
 
-      std::cout << (p.empty() ? "Empty file path" : p.generic_string()) << '\n';
+      std::cout << q << '\n';
 
-
-      //file_access(p);
-      //file_access("");
-      //file_access(std::nullopt);
-
-      std::any x{ 42 };
-      std::any y{ std::string{""} };
 
     }
     catch(const std::out_of_range& e)

@@ -3,6 +3,7 @@
 #include <stdexcept>
 #include <concepts>
 #include <iostream>
+#include <algorithm>
 
 namespace maths
 {
@@ -23,19 +24,51 @@ namespace maths
   [[nodiscard]]
   std::string make_out_of_bounds_error();
 
-  // class template
-  template<std::floating_point T>
-  class probability
+  struct throw_on_range_error
   {
+    template<std::floating_point T>
+    static T check(T t)
+    {
+      if ((t < 0) || (t > 1))
+        throw std::out_of_range{ make_out_of_bounds_error() };
+
+      return t;
+    }
+  protected:
+    throw_on_range_error() = default;
+    ~throw_on_range_error() = default;
+  };
+
+
+  template<std::floating_point T>
+  class clamp_on_range_error
+  {
+  public:
+    T check(T t)
+    {
+      auto p{ std::clamp(t, T{}, T{ 1 }) };
+      m_Error = t - p;
+      return p;
+    }
+
+    T get_error() const { return m_Error; }
+  protected:
+    ~clamp_on_range_error() = default;
+  private:
+    T m_Error;
+  };
+
+  // class template
+  template<std::floating_point T, class RangeErrorPolicy=throw_on_range_error>
+  class probability : public RangeErrorPolicy
+  {
+    T m_Prob{};
   public:
     probability() = default;
 
     // p must be in range [0,1]
-    constexpr explicit probability(T p) : m_Prob{ p }
-    {
-      if ((m_Prob < 0) || (m_Prob > 1))
-        throw std::out_of_range{ make_out_of_bounds_error()};
-    }
+    constexpr explicit probability(T p) : m_Prob{ this->check(p) }
+    {}
 
     constexpr probability(const probability&) = default;
 
@@ -100,8 +133,6 @@ namespace maths
     {
       return s << p.raw_value();
     }
-  private:
-    T m_Prob{};
   };
 
   // P(A) = P(A|B) * P(B) / P(B|A)
