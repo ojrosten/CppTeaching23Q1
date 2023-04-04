@@ -44,30 +44,79 @@ namespace maths
   class clamp_on_range_error
   {
   public:
-    T check(T t)
+    using value_type = T;
+
+    [[nodiscard]]
+    T get_error() const { return m_Error; }
+  protected:
+    clamp_on_range_error() = default;
+
+    clamp_on_range_error(const clamp_on_range_error&) = default;
+    clamp_on_range_error& operator=(const clamp_on_range_error&) = default;
+
+    clamp_on_range_error(clamp_on_range_error&&) noexcept = default;
+    clamp_on_range_error& operator=(clamp_on_range_error&&) noexcept = default;
+
+    ~clamp_on_range_error() = default;
+
+    [[nodiscard]]
+    T check(T t, T tol)
     {
+      if (t > T(1) + tol)
+        throw std::out_of_range{ make_out_of_bounds_error() };
+
       auto p{ std::clamp(t, T{}, T{ 1 }) };
       m_Error = t - p;
       return p;
     }
-
-    T get_error() const { return m_Error; }
-  protected:
-    ~clamp_on_range_error() = default;
   private:
     T m_Error;
   };
 
+  template<class Policy>
+  constexpr bool is_range_error_policy{
+    requires(Policy& policy){
+      &policy.check;
+    }
+  };
+
+  static_assert(is_range_error_policy<throw_on_range_error>);
+
+  template<class T>
+  struct is_floating_point
+  {
+    static constexpr bool value{ false };
+  };
+
+  template<>
+  struct is_floating_point<float>
+  {
+    static constexpr bool value{ true };
+  };
+
+  template<>
+  struct is_floating_point<double>
+  {
+    static constexpr bool value{ true };
+  };
+
+  static_assert(!is_floating_point<int>::value);
+  static_assert(is_floating_point<float>::value);
+
+  template<class T>
+  concept floating_point = is_floating_point<T>::value;
+
   // class template
-  template<std::floating_point T, class RangeErrorPolicy=throw_on_range_error>
+  template<floating_point T, class RangeErrorPolicy=throw_on_range_error>
   class probability : public RangeErrorPolicy
   {
     T m_Prob{};
   public:
     probability() = default;
 
+    template<class... Args>
     // p must be in range [0,1]
-    constexpr explicit probability(T p) : m_Prob{ this->check(p) }
+    constexpr explicit(sizeof...(Args) == 1) probability(T p, Args&&... args) : m_Prob{ this->check(p, std::forward<Args>(args)...) }
     {}
 
     constexpr probability(const probability&) = default;

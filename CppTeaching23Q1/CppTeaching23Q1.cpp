@@ -291,26 +291,19 @@ void file_access(const std::optional<std::filesystem::path>& p)
   std::cout << "No file supplied\n";
 }
 
+
 int main()
 {
     try
     {
       using namespace maths;
 
-      std::cout << sizeof(probability<float, clamp_on_range_error<float>>) << '\n';
-      std::cout << sizeof(clamp_on_range_error<float>) << "\n\n";
-      std::cout << sizeof(probability<float, throw_on_range_error>) << '\n';
-      std::cout << sizeof(throw_on_range_error) << "\n\n";
 
-      probability<float, clamp_on_range_error<float>> p{ 1.4f };
+      probability<float, clamp_on_range_error<float>> p{ 1.5f, 1e-4f };
 
       std::cout << p << '\n' << p.get_error() << '\n';
 
-      probability<float, throw_on_range_error> q{ 0.4f };
-
-      std::cout << q << '\n';
-
-
+      probability<double> q{ 0.7 };
     }
     catch(const std::out_of_range& e)
     {
