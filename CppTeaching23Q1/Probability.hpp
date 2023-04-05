@@ -4,6 +4,7 @@
 #include <concepts>
 #include <iostream>
 #include <algorithm>
+#include <string>
 
 namespace maths
 {
@@ -34,11 +35,25 @@ namespace maths
 
       return t;
     }
+
+    [[nodiscard]]
+    friend constexpr auto operator<=>(const throw_on_range_error&, const throw_on_range_error&) noexcept = default;
   protected:
     throw_on_range_error() = default;
     ~throw_on_range_error() = default;
   };
 
+  /*template<class Policy, class T>
+  constexpr bool has_check_for{
+    requires (const T& t) {
+      Policy::check(t);
+    }
+  };*/
+
+ /* static_assert(has_check_for<throw_on_range_error, float>);
+  static_assert(has_check_for<throw_on_range_error, double>);
+  static_assert(!has_check_for<throw_on_range_error, int>);
+  static_assert(!has_check_for<int, int>);*/
 
   template<std::floating_point T>
   class clamp_on_range_error
@@ -48,6 +63,11 @@ namespace maths
 
     [[nodiscard]]
     T get_error() const { return m_Error; }
+
+    [[nodiscard]]
+    friend constexpr auto operator<=>(const clamp_on_range_error&, const clamp_on_range_error&) noexcept = default;
+
+    constexpr static T tolerance{1e-4f};
   protected:
     clamp_on_range_error() = default;
 
@@ -58,11 +78,11 @@ namespace maths
     clamp_on_range_error& operator=(clamp_on_range_error&&) noexcept = default;
 
     ~clamp_on_range_error() = default;
-
+  protected:
     [[nodiscard]]
-    T check(T t, T tol)
+    T check(T t)
     {
-      if (t > T(1) + tol)
+      if (t > T(1) + tolerance)
         throw std::out_of_range{ make_out_of_bounds_error() };
 
       auto p{ std::clamp(t, T{}, T{ 1 }) };
@@ -73,50 +93,50 @@ namespace maths
     T m_Error;
   };
 
-  template<class Policy>
-  constexpr bool is_range_error_policy{
-    requires(Policy& policy){
-      &policy.check;
-    }
-  };
-
-  static_assert(is_range_error_policy<throw_on_range_error>);
-
-  template<class T>
-  struct is_floating_point
+  namespace impl
   {
-    static constexpr bool value{ false };
+    template<class T>
+    struct aggregator{};
+
+    template<class T>
+      requires (!std::is_fundamental_v<T>)
+    struct aggregator<T> : T
+    {
+      aggregator() = default;
+      using T::check;
+    };
+  }
+
+  template<class Policy, class T>
+  constexpr bool has_check_for{
+       std::regular<impl::aggregator<Policy>>
+    &&
+       requires (impl::aggregator<Policy>& p, const T & t) {
+         { p.check(t) } -> std::same_as<T>;
+       }
   };
 
-  template<>
-  struct is_floating_point<float>
-  {
-    static constexpr bool value{ true };
-  };
+  static_assert(has_check_for<throw_on_range_error, float>);
+  static_assert(has_check_for<clamp_on_range_error<float>, float>);
+  static_assert(has_check_for<throw_on_range_error, double>);
+  static_assert(!has_check_for<throw_on_range_error, int>);
+  //static_assert(!has_check_for<std::string, int>);
+  static_assert(!has_check_for<int, int>);
 
-  template<>
-  struct is_floating_point<double>
-  {
-    static constexpr bool value{ true };
-  };
+  static_assert(std::regular<impl::aggregator<clamp_on_range_error<float>>>);
 
-  static_assert(!is_floating_point<int>::value);
-  static_assert(is_floating_point<float>::value);
-
-  template<class T>
-  concept floating_point = is_floating_point<T>::value;
 
   // class template
-  template<floating_point T, class RangeErrorPolicy=throw_on_range_error>
+  template<std::floating_point T, class RangeErrorPolicy=throw_on_range_error>
+      requires has_check_for<RangeErrorPolicy, T>
   class probability : public RangeErrorPolicy
   {
     T m_Prob{};
   public:
     probability() = default;
 
-    template<class... Args>
     // p must be in range [0,1]
-    constexpr explicit(sizeof...(Args) == 1) probability(T p, Args&&... args) : m_Prob{ this->check(p, std::forward<Args>(args)...) }
+    constexpr explicit probability(T p) : m_Prob{ this->check(p) }
     {}
 
     constexpr probability(const probability&) = default;

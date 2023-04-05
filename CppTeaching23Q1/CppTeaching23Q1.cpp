@@ -299,11 +299,18 @@ int main()
       using namespace maths;
 
 
-      probability<float, clamp_on_range_error<float>> p{ 1.5f, 1e-4f };
+      probability<float, clamp_on_range_error<float>> p{ 1.5f};
 
       std::cout << p << '\n' << p.get_error() << '\n';
 
-      probability<double> q{ 0.7 };
+      probability<double> q{ 0.7 }, r{ q };
+
+      q = r;
+
+      if (q == r)
+      {
+
+      }
     }
     catch(const std::out_of_range& e)
     {
