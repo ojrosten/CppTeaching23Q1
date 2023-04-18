@@ -38,22 +38,23 @@ namespace maths
 
     [[nodiscard]]
     friend constexpr auto operator<=>(const throw_on_range_error&, const throw_on_range_error&) noexcept = default;
-  protected:
-    throw_on_range_error() = default;
-    ~throw_on_range_error() = default;
   };
 
-  /*template<class Policy, class T>
-  constexpr bool has_check_for{
-    requires (const T& t) {
-      Policy::check(t);
-    }
-  };*/
+  template<std::floating_point T>
+  struct probability_range_tolerance;
 
- /* static_assert(has_check_for<throw_on_range_error, float>);
-  static_assert(has_check_for<throw_on_range_error, double>);
-  static_assert(!has_check_for<throw_on_range_error, int>);
-  static_assert(!has_check_for<int, int>);*/
+  template<>
+  struct probability_range_tolerance<float>
+  {
+    constexpr static float value{ 1e-4f };
+  };
+
+  template<>
+  struct probability_range_tolerance<double>
+  {
+    constexpr static double value{ 1e-8f };
+  };
+
 
   template<std::floating_point T>
   class clamp_on_range_error
@@ -67,22 +68,14 @@ namespace maths
     [[nodiscard]]
     friend constexpr auto operator<=>(const clamp_on_range_error&, const clamp_on_range_error&) noexcept = default;
 
-    constexpr static T tolerance{1e-4f};
-  protected:
-    clamp_on_range_error() = default;
+    constexpr static T tolerance{probability_range_tolerance<T>::value};
 
-    clamp_on_range_error(const clamp_on_range_error&) = default;
-    clamp_on_range_error& operator=(const clamp_on_range_error&) = default;
+    void reset() { m_Error = {}; }
 
-    clamp_on_range_error(clamp_on_range_error&&) noexcept = default;
-    clamp_on_range_error& operator=(clamp_on_range_error&&) noexcept = default;
-
-    ~clamp_on_range_error() = default;
-  protected:
     [[nodiscard]]
     T check(T t)
     {
-      if (t > T(1) + tolerance)
+      if ((t > T(1) + tolerance) || (t < -tolerance))
         throw std::out_of_range{ make_out_of_bounds_error() };
 
       auto p{ std::clamp(t, T{}, T{ 1 }) };
@@ -127,16 +120,17 @@ namespace maths
 
 
   // class template
-  template<std::floating_point T, class RangeErrorPolicy=throw_on_range_error>
-      requires has_check_for<RangeErrorPolicy, T>
-  class probability : public RangeErrorPolicy
+  template<std::floating_point T>
+      //requires has_check_for<RangeErrorPolicy, T>
+  class probability //: public RangeErrorPolicy
   {
     T m_Prob{};
   public:
+
     probability() = default;
 
     // p must be in range [0,1]
-    constexpr explicit probability(T p) : m_Prob{ this->check(p) }
+    constexpr explicit probability(T p) : m_Prob{ throw_on_range_error::check(p) }
     {}
 
     constexpr probability(const probability&) = default;

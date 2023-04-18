@@ -1,5 +1,9 @@
 #include "Tennis.hpp"
 
+#include "Probability.hpp"
+
+#include <random>
+
 namespace tennis
 {
     std::string to_string(score s)
@@ -16,5 +20,14 @@ namespace tennis
         }
 
         throw std::logic_error{ "Illegal value!" };
+    }
+
+    player_designation serve(maths::probability<float> p)
+    {
+      std::random_device rd{};
+      std::mt19937 gen{rd()};
+      std::uniform_real_distribution<float> dist;
+
+      return dist(gen) < p.raw_value() ? player_designation::A : player_designation::B;
     }
 }

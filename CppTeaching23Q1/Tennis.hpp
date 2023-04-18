@@ -1,10 +1,15 @@
 #ifndef TENNIS_HPP
 #define TENNIS_HPP
 
-
 #include <string>
 #include <stdexcept>
 #include <vector>
+
+namespace maths
+{
+  template<std::floating_point T>
+  class probability;
+}
 
 namespace tennis
 {
@@ -40,6 +45,12 @@ namespace tennis
         int m_PlayerA{}, m_PlayerB{};
     public:
         std::pair<score, score> get_score() const { return {}; }
+
+        maths::probability<float>* m_Prob;
     };
+
+    enum class player_designation { A, B};
+
+    player_designation serve(maths::probability<float> p);
 }
 #endif
