@@ -291,14 +291,54 @@ void file_access(const std::optional<std::filesystem::path>& p)
   std::cout << "No file supplied\n";
 }
 
+namespace punning
+{
+  int foo(int* pi, float* pf)
+  {
+    *pi = 1;
+    *pf = 0;
+
+    return *pi;
+  }
+}
+
 
 int main()
 {
     try
     {
-      using namespace maths;
+      using namespace punning;
+
+      int x{ 42 };
+
+      std::cout << foo(&x, reinterpret_cast<float*>(&x)) << '\n';
+      std::cout << x << '\n' << '\n';
 
 
+      /*{
+        int z{ 256 };
+        auto pc{ reinterpret_cast<unsigned char*>(&z) };
+        std::cout << *pc << '\n';
+
+        unsigned char c[sizeof(int)]{};
+        std::memcpy(c, &z, sizeof(int));
+
+        std::cout << c << '\n';
+      }*/
+
+      //{
+      //  unsigned char c[sizeof(int)]{255, 255, 0, 0};
+      //  auto pi{ reinterpret_cast<int*>(c)}; // UNDEFINED BEHAVIOUR
+      //  std::cout << *pi << '\n';
+
+      //  std::cout << std::bit_cast<int>(c) << '\n';
+      //}
+
+      /*{
+        int x{1065353216};
+        auto pf{reinterpret_cast<float*>(&x)};
+        std::cout << std::hexfloat << *pf << '\n';
+      }*/
     }
     catch(const std::out_of_range& e)
     {
