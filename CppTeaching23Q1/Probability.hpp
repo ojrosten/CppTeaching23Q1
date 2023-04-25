@@ -170,6 +170,12 @@ namespace maths
     }
 
     [[nodiscard]]
+    explicit operator T() const noexcept
+    {
+      return m_Prob;
+    }
+
+    [[nodiscard]]
     friend constexpr probability operator+(probability lhs, probability rhs)
     {
       return lhs += rhs;

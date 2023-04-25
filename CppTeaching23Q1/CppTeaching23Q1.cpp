@@ -19,6 +19,7 @@
 #include <optional>
 #include <filesystem>
 #include <any>
+#include <iterator>
 
 namespace life
 {
@@ -302,43 +303,90 @@ namespace punning
   }
 }
 
+double accumlate(maths::probability<float> p)
+{
+  return {};
+}
+
+
+namespace temp
+{
+
+  struct shape
+  {
+    virtual ~shape() = default;
+
+    virtual bool is_circle() const { return false; }
+    virtual bool is_square() const { return false; }
+  };
+
+  struct circle : shape
+  {
+    double radius() { return {}; }
+
+    bool is_circle() const override { return true; }
+  };
+
+  struct square : shape
+  {
+    bool is_square() const override { return true; }
+  };
+}
 
 int main()
 {
     try
     {
-      using namespace punning;
+      maths::probability<float> p{};
 
-      int x{ 42 };
+      float x = p;
 
-      std::cout << foo(&x, reinterpret_cast<float*>(&x)) << '\n';
-      std::cout << x << '\n' << '\n';
+      using namespace temp;
 
+      std::vector<std::unique_ptr<shape>> shapes{};
 
-      /*{
-        int z{ 256 };
-        auto pc{ reinterpret_cast<unsigned char*>(&z) };
-        std::cout << *pc << '\n';
+      shapes.emplace_back(std::make_unique<circle>());
+      shapes.emplace_back(std::make_unique<square>());
 
-        unsigned char c[sizeof(int)]{};
-        std::memcpy(c, &z, sizeof(int));
+      for (auto& p : shapes)
+      {
+        if (p->is_circle())
+        {
+          if (auto pCircle{ static_cast<circle*>(p.get()) })
+          {
+            std::cout << "Circle\n";
+          }
+        }
 
-        std::cout << c << '\n';
-      }*/
+        if (p->is_square())
+        {
+          if (auto pSquare{ static_cast<square*>(p.get()) })
+          {
+            std::cout << "Square\n";
+          }
+        }
+        /*else if (auto pSquare{ static_cast<square*>(p.get()) })
+        {
+          std::cout << "Square\n";
+        }
+        else
+        {
+          std::cout << "eek";
+        }*/
 
-      //{
-      //  unsigned char c[sizeof(int)]{255, 255, 0, 0};
-      //  auto pi{ reinterpret_cast<int*>(c)}; // UNDEFINED BEHAVIOUR
-      //  std::cout << *pi << '\n';
+      }
 
-      //  std::cout << std::bit_cast<int>(c) << '\n';
-      //}
+      /*std::vector<int> x{};
 
-      /*{
-        int x{1065353216};
-        auto pf{reinterpret_cast<float*>(&x)};
-        std::cout << std::hexfloat << *pf << '\n';
-      }*/
+      auto len{x.size()};
+
+      auto iter{ x.begin() };
+      std::ranges::advance(iter, 3);
+
+      auto dist{ std::ranges::distance(x.begin(), iter) };
+
+      for (auto i{dist}; i < std::ssize(x); ++i)
+      { }*/
     }
     catch(const std::out_of_range& e)
     {
