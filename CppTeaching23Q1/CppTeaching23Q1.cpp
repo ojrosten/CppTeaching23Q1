@@ -333,60 +333,16 @@ namespace temp
   };
 }
 
+std::string plural(std::string_view word)
+{
+  return word.empty() ? "" : std::string{word} += 's';
+}
+
 int main()
 {
     try
     {
-      maths::probability<float> p{};
-
-      float x = p;
-
-      using namespace temp;
-
-      std::vector<std::unique_ptr<shape>> shapes{};
-
-      shapes.emplace_back(std::make_unique<circle>());
-      shapes.emplace_back(std::make_unique<square>());
-
-      for (auto& p : shapes)
-      {
-        if (p->is_circle())
-        {
-          if (auto pCircle{ static_cast<circle*>(p.get()) })
-          {
-            std::cout << "Circle\n";
-          }
-        }
-
-        if (p->is_square())
-        {
-          if (auto pSquare{ static_cast<square*>(p.get()) })
-          {
-            std::cout << "Square\n";
-          }
-        }
-        /*else if (auto pSquare{ static_cast<square*>(p.get()) })
-        {
-          std::cout << "Square\n";
-        }
-        else
-        {
-          std::cout << "eek";
-        }*/
-
-      }
-
-      /*std::vector<int> x{};
-
-      auto len{x.size()};
-
-      auto iter{ x.begin() };
-      std::ranges::advance(iter, 3);
-
-      auto dist{ std::ranges::distance(x.begin(), iter) };
-
-      for (auto i{dist}; i < std::ssize(x); ++i)
-      { }*/
+      std::cout << plural("building");
     }
     catch(const std::out_of_range& e)
     {
