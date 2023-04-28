@@ -1,8 +1,7 @@
 #include "Tennis.hpp"
-
-#include "Probability.hpp"
-
 #include <random>
+
+import mathematics;
 
 namespace tennis
 {

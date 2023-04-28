@@ -1,5 +1,4 @@
 #include "Tennis.hpp"
-#include "Probability.hpp"
 #include "Set.hpp"
 
 #include <iostream>
@@ -20,6 +19,10 @@
 #include <filesystem>
 #include <any>
 #include <iterator>
+#include <numbers>
+#include <source_location>
+
+import mathematics;
 
 namespace life
 {
@@ -333,16 +336,36 @@ namespace temp
   };
 }
 
-std::string plural(std::string_view word)
+std::string plural(std::string_view word, std::source_location loc = std::source_location::current())
 {
-  return word.empty() ? "" : std::string{word} += 's';
+    return std::string{ word.empty() ? "" : std::string{word} += "s " }.append(std::to_string(loc.line()));
 }
+
+#define GET_SET(TYPE_NAME_, PROP_NAME_, VAR_NAME_)\
+void Set##PROP_NAME_(const TYPE_NAME_ val) { VAR_NAME_ = val; }\
+const TYPE_NAME_ Get##PROP_NAME_() const { return (const TYPE_NAME_)VAR_NAME_; }
+
+class baz
+{
+    double m_Radius{};
+public:
+    GET_SET(double, Radius, m_Radius)
+};
+
 
 int main()
 {
     try
     {
-      std::cout << plural("building");
+        using namespace maths;
+
+        std::cout << std::ranges::max(42, 3);
+
+
+        probability<float> p{ 0.5f };
+
+        std::cout << p << '\n';
+
     }
     catch(const std::out_of_range& e)
     {

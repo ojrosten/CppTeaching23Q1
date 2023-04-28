@@ -1,4 +1,5 @@
-#include "Probability.hpp"
+module;
+module mathematics;
 
 namespace maths
 {

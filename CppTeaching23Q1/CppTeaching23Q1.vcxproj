@@ -130,11 +130,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="CppTeaching23Q1.cpp" />
+    <ClCompile Include="Probability.ixx" />
     <ClCompile Include="Probability.cpp" />
     <ClCompile Include="Tennis.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Probability.hpp" />
     <ClInclude Include="Set.hpp" />
     <ClInclude Include="Tennis.hpp" />
   </ItemGroup>
