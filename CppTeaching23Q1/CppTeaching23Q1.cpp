@@ -306,11 +306,6 @@ namespace punning
   }
 }
 
-double accumlate(maths::probability<float> p)
-{
-  return {};
-}
-
 
 namespace temp
 {
@@ -352,20 +347,107 @@ public:
     GET_SET(double, Radius, m_Radius)
 };
 
+template<class T>
+class counting_allocator
+{
+public:
+  using value_type = T;
+
+  counting_allocator() = default;
+
+  T* allocate(std::size_t n)
+  {
+    if (n)
+    {
+      ++(*m_Count);
+      return static_cast<T*>(::operator new(n * sizeof(T)));
+    }
+
+    return nullptr;
+  }
+
+  void deallocate(T* p, std::size_t)
+  {
+    ::operator delete(p);
+  }
+
+  [[nodiscard]]
+  int count() const noexcept { return *m_Count; }
+
+#ifdef _MSC_VER
+#if _ITERATOR_DEBUG_LEVEL != 0
+  template<class U>
+  explicit operator counting_allocator<U>() const
+  {
+    return counting_allocator<U>{m_Count};
+  }
+#endif
+#endif
+
+private:
+  template<class U>
+  friend class counting_allocator;
+
+  explicit counting_allocator(std::shared_ptr<int> count) : m_Count{ count } {}
+
+  std::shared_ptr<int> m_Count{std::make_shared<int>()};
+};
+
+namespace example
+{
+  struct baz
+  {
+    void swap(baz& rhs)
+    {
+      std::cout << "Member-swap!\n";
+    }
+
+    friend void swap(baz& lhs, baz& rhs)
+    {
+      std::cout << "User-defined swap\n";
+      lhs.swap(rhs);
+    }
+  };
+}
+
+namespace algos
+{
+  template<class T>
+  concept has_adl_swap = requires(T & lhs, T & rhs){
+    { swap(lhs, rhs) };
+  };
+
+  struct swapper
+  {
+    template<class T>
+      requires (!has_adl_swap<T>)
+    void operator()(T& lhs, T& rhs) const
+    {
+      std::swap(lhs, rhs);
+    }
+
+    template<class T>
+     requires has_adl_swap<T>
+    void operator()(T& lhs, T& rhs) const
+    {
+      swap(lhs, rhs);
+    }
+  };
+
+  constexpr swapper swap{};
+}
 
 int main()
 {
     try
     {
-        using namespace maths;
+      std::vector<int, counting_allocator<int>> v{};
 
-        std::cout << std::ranges::max(42, 3);
+      std::cout << v.get_allocator().count() << '\n';
 
+      example::baz a{}, b{};
 
-        probability<float> p{ 0.5f };
-
-        std::cout << p << '\n';
-
+      algos::swap(a, b);
     }
     catch(const std::out_of_range& e)
     {
