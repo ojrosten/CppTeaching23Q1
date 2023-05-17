@@ -21,6 +21,11 @@
 #include <iterator>
 #include <numbers>
 #include <source_location>
+#include <numeric>
+#include <execution>
+#include <chrono>
+#include <barrier>
+#include <latch>
 
 import mathematics;
 
@@ -437,21 +442,117 @@ namespace algos
   constexpr swapper swap{};
 }
 
+template<std::invocable Fn>
+void timer(Fn fn)
+{
+    auto start{ std::chrono::high_resolution_clock::now() };
+    auto result{ fn() };
+    auto end{ std::chrono::high_resolution_clock::now() };
+
+    std::cout << "Time taken:" << std::chrono::duration_cast<std::chrono::microseconds>(end - start) << '\n';
+    std::cout << "Result:    " << result << '\n';
+}
+
+void latch_example()
+{
+    constexpr int num{ 4 };
+
+    std::vector<int> data(num);
+    std::vector<std::jthread> threads{};
+    std::latch l{ num };
+
+    for (auto i : std::views::iota(0, num))
+    {
+        threads.emplace_back([&data, &l, i](){ 
+                data[i] += i; 
+                l.count_down();
+            });
+    }
+
+    l.wait();
+
+    for (auto i : data)
+    {
+        std::cout << i << '\n';
+    }
+}
+
+void barrier_example()
+{
+    constexpr int num{ 4 };
+    std::vector<int> ping(num), pong{ 1,2,3,4 };
+
+    auto printer{
+        [&ping,&pong]() noexcept {
+            std::cout << "Ping: ";
+            for (auto i : ping) std::cout << i << " ";
+
+            std::cout << "\nPong: ";
+            for (auto i : pong) std::cout << i << " ";
+
+            std::cout << "\n";
+        }
+    };
+
+    std::barrier b{ num, printer };
+    std::vector<std::jthread> threads{};
+
+    for (auto i : std::views::iota(0, num))
+    {
+        threads.emplace_back(
+            [&, i](){
+                for (auto j : std::views::iota(0, 5))
+                {
+                    if (j % 2) ping[i] += pong[(i + 1) % num];
+                    else       pong[i] += ping[(num - i) % num];
+                    b.arrive_and_wait();
+                }
+            }
+        );
+    }
+}
+
 int main()
 {
     try
     {
-      std::vector<int, counting_allocator<int>> v{};
+        // 2.0 + (ep + ep)
 
-      std::cout << v.get_allocator().count() << '\n';
+        std::cout << std::setprecision(10);
 
-      example::baz a{}, b{};
+        /*constexpr int bound{ 1000000 };
 
-      algos::swap(a, b);
+        auto series = std::views::iota(1, bound) | std::views::transform([](int i){ return 1.0f / i; });
+
+        timer([&series](){ return std::reduce(std::execution::seq, series.begin(), series.end()); });
+        timer([&series](){ return std::reduce(std::execution::par, series.begin(), series.end()); });
+        timer([&series](){ return std::reduce(std::execution::par_unseq, series.begin(), series.end()); });
+        timer([&series](){ return std::reduce(std::execution::unseq, series.begin(), series.end()); });*/
+
+        {
+            std::jthread t{ [](std::stop_token token){
+                    while (!token.stop_requested()) std::cout << "All work and no play\n";
+
+                    std::cout << "Makes Jack a dull boy\n";
+                }
+            };
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+
+            t.get_stop_source().request_stop();
+        }
+
+        std::cout << "\nLatch Exmaple:\n";
+
+        latch_example();
+
+        std::cout << "\nBarrier Exmaple:\n";
+
+        barrier_example();
     }
     catch(const std::out_of_range& e)
     {
-      std::cout << "Out of range Error: " << e.what();
+        std::cout << "Out of range Error: " << e.what();
     }
     catch (const std::logic_error& e)
     {
@@ -459,11 +560,11 @@ int main()
     }
     catch(const std::runtime_error& e)
     {
-      std::cout << e.what();
+        std::cout << e.what();
     }
     catch(const std::exception& e)
     {
-      std::cout << "Exception Error: " << e.what();
+         std::cout << "Exception Error: " << e.what();
     }
     catch (...)
     {
