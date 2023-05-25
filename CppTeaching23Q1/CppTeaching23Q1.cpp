@@ -26,6 +26,7 @@
 #include <chrono>
 #include <barrier>
 #include <latch>
+#include <future>
 
 import mathematics;
 
@@ -402,7 +403,7 @@ namespace example
 {
   struct baz
   {
-    void swap(baz& rhs)
+    void swap(baz&)
     {
       std::cout << "Member-swap!\n";
     }
@@ -512,43 +513,97 @@ void barrier_example()
     }
 }
 
+std::string id()
+{
+    std::stringstream ss{};
+    ss << std::this_thread::get_id();
+    return ss.str();
+}
+
+class thread_pool
+{
+public:
+    explicit thread_pool(std::size_t size)
+    {
+        for ([[maybe_unused]] auto i : std::views::iota(0ul, size))
+        {
+            m_Pool.emplace_back(
+                [this](std::stop_token token){
+                    while (!token.stop_requested() || !m_Q.empty())
+                    {
+                        task_t task{};
+
+                        {
+                            std::unique_lock lock{ m_Mutex };
+                            if (m_Q.empty()) m_CV.wait(lock, token, [](){ return false; });
+                            
+
+                            if (!m_Q.empty())
+                            {
+                                task = std::move(m_Q.front());
+                                m_Q.pop_front();
+                            }
+
+                        }
+
+
+                        m_CV.notify_all();
+
+                        if(task.valid())
+                            task();
+                    }
+                }
+            );
+        }
+    }
+
+    template<std::invocable Fn>
+    void push(Fn fn)
+    {
+        {
+            std::unique_lock lock{ m_Mutex };
+            m_Q.emplace_back(std::move(fn));
+        }
+
+        m_CV.notify_one();
+    }
+private:
+    using task_t = std::packaged_task<void()>;
+
+    std::mutex m_Mutex;
+    std::condition_variable_any m_CV;
+    std::deque<task_t> m_Q;
+    std::vector<std::jthread> m_Pool;
+};
+
 int main()
 {
     try
     {
-        // 2.0 + (ep + ep)
+        thread_pool pool{ 8 };
 
-        std::cout << std::setprecision(10);
+        auto hello{
+            [](){ std::cout << "Hello, thread!\n"; }
+        };
 
-        /*constexpr int bound{ 1000000 };
+        for (auto i : std::views::iota(0, 10))
+            pool.push(hello);
+    
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
-        auto series = std::views::iota(1, bound) | std::views::transform([](int i){ return 1.0f / i; });
+        /*std::cout << "Main thread: " << std::this_thread::get_id() << '\n';
 
-        timer([&series](){ return std::reduce(std::execution::seq, series.begin(), series.end()); });
-        timer([&series](){ return std::reduce(std::execution::par, series.begin(), series.end()); });
-        timer([&series](){ return std::reduce(std::execution::par_unseq, series.begin(), series.end()); });
-        timer([&series](){ return std::reduce(std::execution::unseq, series.begin(), series.end()); });*/
+        std::vector<std::future<std::string>> results;
 
-        {
-            std::jthread t{ [](std::stop_token token){
-                    while (!token.stop_requested()) std::cout << "All work and no play\n";
+        for (auto i : std::views::iota(0, 10))
+            results.emplace_back(std::async(std::launch::deferred | std::launch::async,
+                [i]() -> std::string {
+                    return "Hello thread: " + std::to_string(i) + " " + id() + '\n'; 
+                }));
 
-                    std::cout << "Makes Jack a dull boy\n";
-                }
-            };
 
-            std::this_thread::sleep_for(std::chrono::milliseconds(5));
-
-            t.get_stop_source().request_stop();
-        }
-
-        std::cout << "\nLatch Exmaple:\n";
-
-        latch_example();
-
-        std::cout << "\nBarrier Exmaple:\n";
-
-        barrier_example();
+        for (auto& r : results)
+            std::cout << r.get();*/
     }
     catch(const std::out_of_range& e)
     {
